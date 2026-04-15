@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String          @id @default(cuid())
+  name               String?
+  email              String          @unique
+  role               String          @default("user")
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  banned             Boolean         @default(false)
+  emailVerified      Boolean         @default(false)
+  accounts           Account[]
+  buildersCreated    Builder[]       @relation("UserCreate")
+  buildersUpdated    Builder[]       @relation("UserUpdate")
+  builderMemberships BuilderMember[]
+  resetPassWord      ResetPassWord[]
+  sessions           Session[]
+}
+
+model ResetPassWord {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  token String
+  used               Boolean
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Builder {
+  id                 String          @id @default(cuid())
+  name               String
+  tokenBuilder       String
+  tokenRooter        String
+  url                String
+  idUserCreate       String
+  idUserUpdate       String
+  createDate         DateTime        @default(now())
+  lastUpdate         DateTime?
+  userCreate         User            @relation("UserCreate", fields: [idUserCreate], references: [id], onDelete: Cascade)
+  userUpdate         User            @relation("UserUpdate", fields: [idUserUpdate], references: [id], onDelete: Cascade)
+  builderMemberships BuilderMember[]
+}
+
+model BuilderMember {
+  id        String  @id @default(cuid())
+  idBuilder String
+  userId    String
+  role      String  @default("member")
+  builder   Builder @relation(fields: [idBuilder], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([idBuilder, userId])
+}
+
+model HistoryTransferTicket {
+  id         Int              @id @default(autoincrement())
+  createdAt  DateTime         @default(now())
+  nameUser   String
+  idUser     String
+  nameAction String
+  typeAction String           @default("team")
+  result     String?
+  tickets    TicketTransfer[]
+
+  @@map("history_transfer_ticket")
+}
+
+model TicketTransfer {
+  id              Int                   @id @default(autoincrement())
+  ticketId        String
+  sequentialId    Int
+  queueStart      String?
+  queueEnd        String?
+  attendenceStart String?
+  attendenceEnd   String?
+  result          String?
+  motive          String?
+  historyId       Int
+  history         HistoryTransferTicket @relation(fields: [historyId], references: [id])
+
+  @@map("ticket_transfer")
+}
+
+model ErrorsLogs {
+  id           Int      @id @default(autoincrement())
+  localization String
+  details      String
+  createdError DateTime @default(now())
+  tokenBuilder String
+  tokenRouter  String
+  url          String
+}
