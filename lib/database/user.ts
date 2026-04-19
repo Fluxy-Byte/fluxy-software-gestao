@@ -2,14 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/auth";
 
 export async function getUsers() {
-    return await prisma.user.findMany({
-        include: {
-            builderMemberships: true
-        }
-    })
+    return await prisma.user.findMany();
 }
 
-export async function updateUser(id: string, name: string, email: string, role: string) {
+export async function updateUser(id: string, name: string, email: string, role: string, color: string) {
     return await prisma.user.update({
         where: {
             id
@@ -60,12 +56,12 @@ export async function sendTokenResetPassWordUser(email: string) {
     return await auth.api.requestPasswordReset({
         body: {
             email,
-            redirectTo: "https://thato.nijpgo.easypanel.host/reset-password",
+            redirectTo: "https://localhost:5205/reset-password",
         },
     });
 }
 
-export async function createUser(name: string, email: string, password: string, role: string) {
+export async function createUser(name: string, email: string, password: string, role: string, color: string) {
     const user = await auth.api.signUpEmail({
         body: {
             name,

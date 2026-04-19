@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { updateUser, updatePassWordUser, createUser, getUsers, getUserWithEmail } from "@/lib/database/user";
-import { createBuilderMember, deleteBuilderMemberToIdUser } from "@/lib/database/builderMembers";
 import { auth } from "@/lib/auth/auth";
 
 export async function GET(req: Request) {
@@ -46,7 +45,7 @@ export async function GET(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const { idUser, name, email, role, builderMemberships, newPassword } = await req.json();
+    const { idUser, name, email, role, newPassword, color } = await req.json();
 
     const session = await auth.api.getSession({
       headers: req.headers,
@@ -68,20 +67,7 @@ export async function PUT(req: Request) {
 
     const user = session.user;
 
-    const resultDelete = await deleteBuilderMemberToIdUser(idUser);
-
-    if (builderMemberships.length != 0) {
-      for (let i = 0; builderMemberships.length > i; i++) {
-        const create = await createBuilderMember({
-          userId: idUser,
-          idBuilder: builderMemberships[i]
-
-        })
-      }
-    }
-
-
-    const users = await updateUser(idUser, name, email, role);
+    const users = await updateUser(idUser, name, email, role, color);
 
     if (newPassword) {
       updatePassWordUser(users.id, newPassword, req);
@@ -103,7 +89,7 @@ export async function PUT(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role, builderMemberships } = await req.json();
+    const { name, email, password, role, color } = await req.json();
 
     const session = await auth.api.getSession({
       headers: req.headers,
@@ -138,15 +124,9 @@ export async function POST(req: Request) {
       name,
       email,
       password,
-      role
+      role,
+      color
     );
-
-    for (let i = 0; builderMemberships.length > i; i++) {
-      await createBuilderMember({
-        userId: user.user.id,
-        idBuilder: builderMemberships[i]
-      })
-    }
 
     return NextResponse.json({
       status: user ? true : false,

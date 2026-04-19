@@ -1,30 +1,30 @@
-import { BuilderResponse } from "@/lib/interfaces/builder.interface";
-import { BuilderMemberResponse } from "@/lib/interfaces/builderMembers.interface";
+// GET
+export interface UserResponseDTO {
+  id: string;
+  name?: string;
+  email: string;
+  role: string;
+  color: string;
+  banned: boolean;
+  emailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
+// CREATE
 export interface CreateUserDTO {
-    name?: string;
-    email: string;
-    role?: string; // opcional (default = "user")
+  name?: string;
+  email: string;
+  password: string;
+  color?: string;
 }
 
+// UPDATE
 export interface UpdateUserDTO {
-    name?: string;
-    email?: string;
-    role?: string;
-}
-
-export interface UserResponse {
-    id: string;
-    name?: string | null;
-    email: string;
-    role: string;
-
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-export interface UserWithRelations extends UserResponse {
-    builderMemberships: BuilderMemberResponse[];
-    buildersCreated: BuilderResponse[];
-    buildersUpdated: BuilderResponse[];
+  name?: string;
+  email?: string;
+  role?: string;
+  banned?: boolean;
+  emailVerified?: boolean;
+  color?: string;
 }

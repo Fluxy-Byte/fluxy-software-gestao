@@ -22,7 +22,7 @@ export function Navbar() {
             className="text-muted-foreground hover:text-foreground"
             asChild
           >
-            <Link href="/login">Entrar</Link>
+            <Link href="/signin">Entrar</Link>
           </Button>
           <Button
             size="sm"

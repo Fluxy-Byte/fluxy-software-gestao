@@ -8,8 +8,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Telek - MassTicket',
-  description: 'Faça transferencia de seus tickets dos builders de atendimento da blip em massa e com mais velocidade.',
+  title: 'Fluxy - Software de Gestão',
+  description: 'Fluxy é um software de gestão que ajuda você a otimizar seus processos e tomar decisões mais inteligentes.',
   generator: 'V1.0',
   icons: {
     icon: [
@@ -35,7 +35,7 @@ export default function RootLayout({
 
         {children}
         <Analytics />
-        <Toaster position="top-center" />
+        <Toaster position="bottom-right" />
       </body>
     </html>
   )

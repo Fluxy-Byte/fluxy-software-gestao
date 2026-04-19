@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { deleteUser } from "@/lib/database/user";
-import { deleteBuilderMemberToIdBuilder } from "@/lib/database/builderMembers";
 
 export async function DELETE(
   req: Request,
@@ -35,8 +34,6 @@ export async function DELETE(
     }
 
     await deleteUser(id);
-
-    await deleteBuilderMemberToIdBuilder(id);
 
     return NextResponse.json({
       status: true,

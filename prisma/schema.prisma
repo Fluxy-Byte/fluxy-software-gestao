@@ -7,30 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+}
+
 model User {
-  id                 String          @id @default(cuid())
-  name               String?
-  email              String          @unique
-  role               String          @default("user")
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  banned             Boolean         @default(false)
-  emailVerified      Boolean         @default(false)
-  accounts           Account[]
-  buildersCreated    Builder[]       @relation("UserCreate")
-  buildersUpdated    Builder[]       @relation("UserUpdate")
-  builderMemberships BuilderMember[]
-  resetPassWord      ResetPassWord[]
-  sessions           Session[]
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  role          String          @default("user")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  banned        Boolean         @default(false)
+  emailVerified Boolean         @default(false)
+  color         String          @default("#d18ff7")
+
+  accounts      Account[]
+  resetPassWord ResetPassWord[]
+  sessions      Session[]
+  orders        Order[]
+  services      Service[]
+  clients       Client[]
+  logs          Log[]
 }
 
 model ResetPassWord {
-  id                 String   @id @default(cuid())
-  createdAt          DateTime @default(now())
-  token String
-  used               Boolean
-  userId             String
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  token     String
+  used      Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Verification {
@@ -51,6 +61,7 @@ model Session {
   userAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -67,76 +78,102 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
+  password              String? // ⚠️ sempre armazenar hash
+
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
   @@index([userId])
 }
 
-model Builder {
-  id                 String          @id @default(cuid())
-  name               String
-  tokenBuilder       String
-  tokenRooter        String
-  url                String
-  idUserCreate       String
-  idUserUpdate       String
-  createDate         DateTime        @default(now())
-  lastUpdate         DateTime?
-  userCreate         User            @relation("UserCreate", fields: [idUserCreate], references: [id], onDelete: Cascade)
-  userUpdate         User            @relation("UserUpdate", fields: [idUserUpdate], references: [id], onDelete: Cascade)
-  builderMemberships BuilderMember[]
+model Order {
+  id           String        @id @default(cuid())
+
+  clientId     String
+  userId       String
+
+  numberOrder  Int
+  statusOrder  OrderStatus   @default(PENDING)
+  payment      Boolean       @default(false)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client       Client        @relation(fields: [clientId], references: [id])
+
+  listServices ListServices[]
+
+  @@index([userId])
+  @@index([clientId])
 }
 
-model BuilderMember {
-  id        String  @id @default(cuid())
-  idBuilder String
+model Service {
+  id         String   @id @default(cuid())
+  name       String
+  value      Float
+  active     Boolean  @default(true)
+
+  userId     String
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  listOrders ListServices[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  address   String
+  cep       String
+
+  cpf       String?
+  cnpj      String?
+
+  active    Boolean  @default(true)
+  discount  Float    @default(0.0)
+  increase  Float    @default(0.0)
+
   userId    String
-  role      String  @default("member")
-  builder   Builder @relation(fields: [idBuilder], references: [id], onDelete: Cascade)
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([idBuilder, userId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders    Order[]
 }
 
-model HistoryTransferTicket {
-  id         Int              @id @default(autoincrement())
-  createdAt  DateTime         @default(now())
-  nameUser   String
-  idUser     String
-  nameAction String
-  typeAction String           @default("team")
-  result     String?
-  tickets    TicketTransfer[]
+model ListServices {
+  id         String   @id @default(cuid())
 
-  @@map("history_transfer_ticket")
+  orderId    String
+  serviceId  String
+
+  value      Float
+  discount   Float   @default(0.0)
+  quantity   Int     @default(1)
+
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service    Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([orderId, serviceId])
 }
 
-model TicketTransfer {
-  id              Int                   @id @default(autoincrement())
-  ticketId        String
-  sequentialId    Int
-  queueStart      String?
-  queueEnd        String?
-  attendenceStart String?
-  attendenceEnd   String?
-  result          String?
-  motive          String?
-  historyId       Int
-  history         HistoryTransferTicket @relation(fields: [historyId], references: [id])
+model Log {
+  id         String   @id @default(cuid())
 
-  @@map("ticket_transfer")
-}
-
-model ErrorsLogs {
-  id           Int      @id @default(autoincrement())
-  localization String
-  details      String
-  createdError DateTime @default(now())
-  tokenBuilder String
-  tokenRouter  String
-  url          String
+  about      String
+  type       String
+  createdAt  DateTime @default(now())
+  userId     String
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
